@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OBGY - Coming Soon</title>
+    <style>
+        :root {
+            --primary: #ff00ff; /* Pink/Purple for OBGY */
+            --bg: #050510;
+            --glass: rgba(255,255,255,0.05);
+        }
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMATION SECTION --- */
+        .anim-container {
+            margin-top: 50px;
+            position: relative;
+            width: 150px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .heartbeat-line {
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .heartbeat-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: ecg 1.5s linear infinite;
+        }
+        
+        .pulse-icon {
+            font-size: 3em;
+            animation: heartbeat 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px var(--primary));
+        }
+
+        @keyframes ecg { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes heartbeat { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } 60% { transform: scale(1); } }
+
+        /* --- TEXT --- */
+        .status-text {
+            font-size: 1.5em;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 20px;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+            text-align: center;
+        }
+        .sub-text { opacity: 0.7; font-size: 0.9em; margin-bottom: 40px; text-align: center; }
+
+        /* --- GAME SECTION --- */
+        .game-area {
+            width: 100%;
+            max-width: 400px;
+            perspective: 1000px;
+        }
+        
+        .flashcard {
+            background: var(--glass);
+            border: 1px solid rgba(189, 52, 254, 0.3);
+            border-radius: 20px;
+            height: 250px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            border-radius: 20px;
+        }
+
+        .front { background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)); }
+        
+        .back {
+            background: linear-gradient(135deg, var(--primary), #800080);
+            transform: rotateY(180deg);
+            color: #fff;
+        }
+
+        .card-label { font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; margin-bottom: 15px; }
+        .card-content { font-size: 1.3em; font-weight: bold; line-height: 1.4; }
+        .tap-hint { position: absolute; bottom: 15px; font-size: 0.8em; opacity: 0.6; animation: pulse 2s infinite; }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover { background: var(--primary); color: #fff; box-shadow: 0 0 15px var(--primary); }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="anim-container">
+        <div class="pulse-icon">🤰</div>
+        <!-- <div class="heartbeat-line"></div> -->
+    </div>
+
+    <div class="status-text">OBGY Test Not Released</div>
+    <div class="sub-text">Delivering the questions soon! Stay sharp with these facts.</div>
+
+    <div class="game-area">
+        <div class="flashcard" onclick="flipCard()">
+            <div class="front">
+                <div class="card-label">🌸 OBGY Rapid Fire</div>
+                <div class="card-content" id="q-text">Loading...</div>
+                <div class="tap-hint">Tap to Reveal Answer</div>
+            </div>
+            <div class="back">
+                <div class="card-label">✅ High Yield Fact</div>
+                <div class="card-content" id="a-text">...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="nextCard()">Next Fact ⏩</button>
+    </div>
+
+    <script>
+        const card = document.querySelector('.flashcard');
+        const qText = document.getElementById('q-text');
+        const aText = document.getElementById('a-text');
+
+        // High Yield OBGY One Liners for FMGE
+        const facts = [
+            { q: "Drug of Choice for Emergency Contraception?", a: "Levonorgestrel (1.5mg within 72 hrs)" },
+            { q: "Most common type of Fistula in obstetrics?", a: "Vesicovaginal Fistula (VVF)" },
+            { q: "Criteria used to diagnose PCOS?", a: "Rotterdam Criteria (2 out of 3)" },
+            { q: "Most common type of Pelvis in females?", a: "Gynaecoid (50%)" },
+            { q: "Cervical Cancer Screening (Pap Smear) starts at what age?", a: "21 Years" },
+            { q: "Drug of Choice for Eclampsia?", a: "Magnesium Sulphate (MgSO4)" },
+            { q: "Absolute contraindication for OCPs?", a: "History of Breast Cancer / Thromboembolism" },
+            { q: "First sign of puberty in females?", a: "Thelarche (Breast Budding)" },
+            { q: "Most common ovarian tumor in pregnancy?", a: "Dermoid Cyst (Teratoma)" },
+            { q: "Antidote for MgSO4 toxicity?", a: "Calcium Gluconate" }
+        ];
+
+        let currentIdx = 0;
+
+        function updateCard() {
+            // Reset Flip
+            card.classList.remove('flipped');
+            
+            // Wait for flip back then change text
+            setTimeout(() => {
+                qText.innerText = facts[currentIdx].q;
+                aText.innerText = facts[currentIdx].a;
+            }, 200);
+        }
+
+        function flipCard() {
+            card.classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            currentIdx = (currentIdx + 1) % facts.length;
+            updateCard();
+        }
+
+        // Init
+        updateCard();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#050510">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SWT Portal">
+    <meta name="description" content="NIST & SUNRISE Student Portal">
+
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💠</text></svg>">
+
+    <title>NIST & SUNRISE - Portal</title>
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            /* DARK MODE (Default) */
+            --bg-color: #050510;
+            --neon-blue: #00c6ff;
+            --neon-purple: #bd34fe;
+            --neon-green: #2ecc71; /* NEW for completed tasks */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-sec: rgba(255, 255, 255, 0.7);
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --overlay-grad: radial-gradient(circle at center, rgba(10, 15, 30, 0.5) 0%, rgba(5, 5, 10, 0.95) 100%);
+            --header-bg: rgba(30, 35, 55, 0.6);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --btn-grad: linear-gradient(135deg, #007BFF, #00c6ff);
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        [data-theme="light"] {
+            --bg-color: #e8ecf1;
+            --neon-blue: #0069d9; 
+            --neon-purple: #800080;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #1a1a2e; 
+            --text-sec: #4a4a6a;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --overlay-grad: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(240, 240, 245, 0.8) 100%);
+            --header-bg: rgba(255, 255, 255, 0.85);
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            --btn-grad: linear-gradient(135deg, #007BFF, #0056b3);
+        }
+
+        /* --- TRANSITIONS --- */
+        body, .header-container, .subject-card, .tab-btn, input, #login-screen, .control-btn, #countdown-island {
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* --- SECURITY & NO SELECT --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            text-align: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            overflow-x: hidden; 
+            
+            /* DISABLE SELECTION & LONG PRESS */
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+            -webkit-touch-callout: none; /* iOS Safari Long Press */
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* --- LAYERS --- */
+        #vanta-bg {
+            width: 100%;
+            height: 100vh;
+            position: fixed; 
+            top: 0;
+            left: 0;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        #bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: var(--overlay-grad);
+            pointer-events: none;
+        }
+
+        /* --- CONTROLS --- */
+        .controls-area {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+            align-items: center;
+        }
+        
+        /* --- COUNTDOWN AREA (LEFT SIDE) --- */
+        .countdown-area {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between timer and progress button */
+        }
+
+        #countdown-island {
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 1em;
+            cursor: default;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 45px; /* Match height of control buttons */
+            box-sizing: border-box;
+        }
+
+        #countdown-island:hover {
+            box-shadow: 0 0 15px var(--neon-blue);
+            transform: scale(1.05);
+            border-color: var(--neon-blue);
+        }
+        
+        /* NEW: PROGRESS BUTTON */
+        #progress-btn {
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0 15px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        #progress-btn:hover {
+            background: var(--neon-blue);
+            color: #fff;
+            box-shadow: 0 0 15px var(--neon-blue);
+            transform: translateY(-2px);
+        }
+
+        .control-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Transition for general hover effects */
+            transition: transform 0.2s, box-shadow 0.2s; 
+        }
+
+        .control-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--neon-blue); }
+        .control-btn:active { transform: scale(0.9); }
+
+        /* --- ANIMATION TOGGLE DYNAMIC ISLAND --- */
+        #animBtn {
+            overflow: hidden;
+            justify-content: flex-start; /* Keep icon left when expanding */
+            padding-left: 0;
+            /* Specialized transition for expansion */
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.4s ease;
+            position: relative;
+        }
+
+        /* The icon inside the button */
+        #animBtn .btn-icon {
+            width: 45px; /* Same as button height */
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        #animBtn.expanded {
+            width: 160px; /* Expand width */
+            border-radius: 25px;
+            background: rgba(10, 15, 30, 0.95); /* Slightly darker bg when expanded */
+            border-color: var(--neon-blue);
+        }
+
+        #animText {
+            opacity: 0;
+            white-space: nowrap;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-left: 0px;
+            color: var(--neon-blue);
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        #animBtn.expanded #animText {
+            opacity: 1;
+            transition-delay: 0.1s; /* Show text after width starts expanding */
+        }
+
+        #installBtn {
+            display: none;
+            background: var(--neon-blue);
+            color: #fff;
+            width: auto;
+            padding: 0 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* --- EXAM BACK BUTTON STYLES --- */
+        #exam-back-controls {
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            z-index: 2000; /* Ensure it's above everything including iframe */
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: 8px;
+        }
+
+        #exam-red-cross {
+            color: #ff3b3b; /* Red Cross */
+            font-size: 18px; /* Very small */
+            font-weight: 900;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        #exam-red-cross:hover {
+            transform: scale(1.2);
+            color: #ff0000;
+        }
+
+        #exam-back-text {
+            display: none; /* Hidden until cross is clicked */
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #ff3b3b;
+            cursor: pointer;
+            animation: fadeInText 0.3s ease;
+        }
+
+        #exam-back-text:hover {
+            background: #ff3b3b;
+        }
+
+        @keyframes fadeInText {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- EXAM CONTAINER (IFRAME PLACEHOLDER) --- */
+        #exam-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #exam-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* --- MESSAGE BOX --- */
+        .message-box {
+            position: fixed;
+            top: 130px; /* Below the main header */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 90;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 80%;
+            animation: slideIn 0.3s ease-out;
+            text-align: center;
+        }
+
+        .message-box.error { background-color: rgba(231, 76, 60, 0.9); }
+        .message-box.success { background-color: rgba(46, 204, 113, 0.9); }
+        .message-box.info { background-color: rgba(52, 152, 219, 0.9); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* --- NEW: TASK MARKER STYLES --- */
+        .task-mark {
+            position: absolute;
+            top: 10px; /* Adjusted slightly */
+            right: 10px; /* Adjusted slightly */
+            width: 16px; /* Reduced from 22px */
+            height: 16px; /* Reduced from 22px */
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10; /* Above card content */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .task-mark:hover { 
+            border-color: var(--neon-blue); 
+            transform: scale(1.15); 
+        }
+
+        .task-mark.completed {
+            background: var(--neon-green);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .task-mark.completed::after {
+            content: '✓';
+            color: #000;
+            font-size: 10px; /* Reduced from 14px */
+            font-weight: 900;
+        }
+        
+        /* --- NEW: PROGRESS MODAL STYLES --- */
+        #progress-modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(10, 15, 30, 0.95);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 24px;
+            z-index: 3000;
+            width: 90%; 
+            max-width: 400px;
+            color: white;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            opacity: 0; 
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #progress-modal.show { 
+            opacity: 1; 
+            pointer-events: all; 
+            transform: translate(-50%, -50%) scale(1); 
+        }
+
+        .progress-header { 
+            font-size: 1.5em; 
+            font-weight: 800; 
+            color: var(--neon-blue); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .close-progress {
+            background: none;
+            border: none;
+            color: var(--text-sec);
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .close-progress:hover { color: #fff; }
+
+        .progress-stats-row { 
+            display: flex; 
+            gap: 12px; 
+            align-items: baseline; 
+        }
+        
+        .progress-big-num { 
+            font-size: 3.5em; 
+            font-weight: 800; 
+            color: white; 
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+        
+        .progress-total-text { 
+            color: var(--text-sec); 
+            font-size: 1.1em; 
+            font-weight: 500;
+        }
+
+        .progress-bar-container { 
+            width: 100%; 
+            height: 12px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            overflow: hidden; 
+            margin: 10px 0; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .progress-bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); 
+            width: 0%; 
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 0 10px rgba(189, 52, 254, 0.5);
+        }
+
+        .completed-list-container {
+            margin-top: 10px;
+        }
+        
+        .completed-list-title {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            color: var(--text-sec);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .completed-list { 
+            max-height: 180px; 
+            overflow-y: auto; 
+            text-align: left; 
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .completed-item { 
+            padding: 10px 12px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            color: rgba(255,255,255,0.9); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-size: 0.95em;
+        }
+        
+        .completed-item:last-child { border-bottom: none; }
+        
+        .completed-item::before { 
+            content: '✓'; 
+            color: var(--neon-green); 
+            font-weight: 900;
+            background: rgba(46, 204, 113, 0.2);
+            width: 20px; height: 20px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 50%;
+            font-size: 0.8em;
+        }
+        
+        /* Scrollbar for the list */
+        .completed-list::-webkit-scrollbar { width: 4px; }
+        .completed-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+
+        /* --- HEADER --- */
+        .header-wrapper {
+            padding-top: 60px;
+            margin-bottom: 30px;
+            animation: slideDown 1s ease-out;
+        }
+
+        .header-container {
+            display: inline-block;
+            background: var(--header-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 25px 60px;  
+            min-width: 300px;
+            max-width: 90%;
+            border-radius: 60px; 
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            width: 70%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        .header-container h1 {
+            margin: 0;
+            font-size: 2.2em;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to bottom, var(--text-main), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(0, 198, 255, 0.3));
+        }
+
+        .header-container h2 {
+            margin-top: 5px;
+            font-size: 0.8em;
+            letter-spacing: 4px;
+            color: var(--text-sec);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        /* NEW: Glowing Welcome Message Style */
+        #glowing-welcome {
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            /* Matchable color using the neon purple/pink */
+            background: linear-gradient(90deg, #ff00ff, #bd34fe, #ff00ff); 
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* Initial glow shadow */
+            filter: drop-shadow(0 0 10px rgba(189, 52, 254, 0.7)); 
+            animation: glowPulse 2s infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            from {
+                filter: drop-shadow(0 0 5px rgba(189, 52, 254, 0.4));
+                opacity: 0.9;
+            }
+            to {
+                filter: drop-shadow(0 0 15px rgba(189, 52, 254, 1));
+                opacity: 1;
+            }
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #login-screen {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--glass-border);
+            max-width: 360px;
+            margin: 40px auto;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #username-input, #password-input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border-radius: 12px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            transition: 0.3s;
+        }
+
+        #username-input { margin-bottom: 20px; }
+        #password-input { padding-right: 45px; }
+        
+        .eye-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-sec);
+            z-index: 10;
+            padding: 5px;
+        }
+
+        #username-input:focus, #password-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.2);
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        #login-button {
+            width: 100%;
+            padding: 15px;
+            background: var(--btn-grad);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 123, 255, 0.3);
+            margin-top: 10px;
+        }
+
+        #error-message {
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        /* --- DASHBOARD --- */
+        #dashboard-container { display: none; }
+        
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px 80px 20px;
+        }
+
+        /* --- ACTION BAR (SEARCH + SORT) --- */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            max-width: 500px; /* Reduced container width */
+            margin: 0 auto 30px auto;
+            position: relative;
+            z-index: 50;
+        }
+
+        .sort-island-container {
+            flex-shrink: 0;
+            height: 45px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dynamic-island {
+            width: 45px;
+            height: 45px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .dynamic-island:hover {
+            box-shadow: 0 0 15px var(--neon-blue);
+            border-color: var(--neon-blue);
+        }
+
+        .dynamic-island.expanded {
+            width: 200px;
+            border-radius: 30px;
+            background: rgba(10, 15, 30, 0.95);
+            border-color: var(--neon-blue);
+            z-index: 100;
+        }
+
+        .sort-icon {
+            font-size: 1.2em;
+            position: absolute;
+            transition: opacity 0.2s;
+        }
+
+        .dynamic-island.expanded .sort-icon {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s delay 0.1s;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dynamic-island.expanded .sort-options {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sort-opt-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 0.9em;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .sort-opt-btn:hover {
+            background: var(--neon-blue);
+            color: #fff;
+        }
+
+        /* NEW: Update Button */
+        .new-updates-btn {
+            height: 45px;
+            padding: 0 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(189, 52, 254, 0.3); /* Purple border matching Mock card */
+            border-radius: 45px;
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(10px);
+            animation: softGlow 2s infinite ease-in-out;
+            white-space: nowrap;
+            transition: transform 0.2s;
+        }
+
+        .new-updates-btn:hover {
+            transform: scale(1.05);
+            background: rgba(189, 52, 254, 0.15);
+        }
+
+        .new-updates-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Glow animation for the button */
+        @keyframes softGlow {
+            0% { box-shadow: 0 0 5px rgba(189, 52, 254, 0.2); border-color: rgba(189, 52, 254, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(189, 52, 254, 0.6); border-color: rgba(189, 52, 254, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(189, 52, 254, 0.2); border-color: rgba(189, 52, 254, 0.3); }
+        }
+
+        /* Search Bar */
+        .search-wrapper {
+            flex-grow: 1;
+            position: relative;
+            max-width: 250px; /* Limit width */
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 12px 15px 12px 40px; /* Reduced padding */
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-main);
+            font-size: 0.9em; /* Smaller font */
+            backdrop-filter: blur(10px);
+            outline: none;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        #search-input::placeholder {
+            color: rgba(255,255,255,0.5);
+            text-align: left;
+        }
+
+        #search-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 198, 255, 0.15);
+        }
+        
+        /* Search Icon Visual */
+        .search-icon-visual {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.6;
+            pointer-events: none;
+            font-size: 0.9em;
+        }
+
+        .folder-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 10px 30px;
+            font-size: 0.95em;
+            color: var(--text-sec);
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn.active {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+            box-shadow: 0 0 25px rgba(128, 128, 128, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* --- CARDS & GLASS EFFECTS --- */
+        .folder-view { display: none; }
+        .folder-view.active-folder { display: block; }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .subject-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer; 
+            padding: 25px;
+            min-height: 120px;
+            
+            /* IMPROVED GLASS EFFECT */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            /* border-left-color is now set by JS inline style */
+            border-left-width: 4px;
+            
+            border-radius: 20px;
+            color: var(--text-main);
+            text-align: left;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            
+            position: relative;
+            overflow: hidden;
+            animation: cardEntrance 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            transition: all 0.3s ease;
+        }
+
+        /* Base hover effect for all cards, glow set inline by JS */
+        .subject-card:hover { 
+            /* transform: translateY(-5px); <-- Handled by JS now for consistency */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            /* The specific box-shadow is applied via JS for the color match */
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Highlighting newly added card - Applies when data-is-new="true" is present on the li */
+        li[data-is-new="true"] .subject-card {
+            animation: highlightPulse 2s infinite ease-in-out !important;
+            border-color: var(--neon-purple) !important; /* Matches the button glow */
+        }
+
+        @keyframes highlightPulse {
+            0% { box-shadow: 0 0 10px rgba(189, 52, 254, 0.3); transform: scale(1); }
+            50% { box-shadow: 0 0 30px rgba(189, 52, 254, 0.7); transform: scale(1.02); }
+            100% { box-shadow: 0 0 10px rgba(189, 52, 254, 0.3); transform: scale(1); }
+        }
+
+        .subject-card:active { transform: scale(0.98); }
+
+        .subject-card strong {
+            display: block;
+            font-size: 1.4em;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subject-card span {
+            display: block;
+            color: var(--text-sec);
+            font-size: 0.9em;
+            line-height: 1.5;
+            font-weight: 400;
+            opacity: 0.85;
+        }
+
+        .footer-text {
+            margin-top: 50px;
+            font-size: 0.8em;
+            color: var(--text-sec);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .hidden-card { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translateY(-40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes cardEntrance { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* --- PROFS VIEW STYLES (3 COLUMNS) --- */
+        .profs-column-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .prof-column {
+            flex: 1;
+            min-width: 280px; /* Ensures stacking on mobile */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px;
+        }
+
+        .prof-column h3 {
+            text-align: center;
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 10px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 1.1em;
+        }
+
+        .horizontal-line-separator {
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+            margin: 40px auto;
+            opacity: 0.5;
+        }
+        
+        /* Ensure LIs in prof view don't have bullets if not in grid */
+        .prof-column li {
+            list-style: none;
+        }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="vanta-bg"></div>
+    <div id="bg-overlay"></div>
+
+    <div id="exam-container">
+        <iframe id="exam-iframe" src="" title="Exam View"></iframe>
+    </div>
+
+    <div id="exam-back-controls">
+        <div id="exam-red-cross" onclick="showBackText()">❌</div>
+        <div id="exam-back-text" onclick="closeExamAndReturn()">Go back to subjects</div>
+    </div>
+    
+    <div id="progress-modal">
+        <div class="progress-header">
+            <span>Your Progress</span>
+            <button class="close-progress" onclick="toggleProgressModal()">✕</button>
+        </div>
+        
+        <div class="progress-stats-row">
+            <span id="progress-big-num" class="progress-big-num">0</span>
+            <span id="progress-total-text" class="progress-total-text">/ 0 Tasks Completed</span>
+        </div>
+        
+        <div class="progress-bar-container">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+        </div>
+        
+        <div class="completed-list-container">
+            <div class="completed-list-title">Finished Subjects</div>
+            <div id="completed-list" class="completed-list">
+                <div class="completed-item">No tasks finished yet...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="countdown-area">
+        <div id="countdown-island">
+            <span>⏳</span>
+            <span id="days-text">-- Days</span>
+        </div>
+        <button id="progress-btn" onclick="toggleProgressModal()">
+            📊 Progress
+        </button>
+    </div>
+
+    <div class="controls-area">
+        <button id="installBtn" class="control-btn" title="Install App">⬇️</button>
+        <div id="animBtn" class="control-btn" onclick="toggleAnimationControl()">
+            <span class="btn-icon">🕊️</span>
+            <span id="animText">Animation ON</span>
+        </div>
+        <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        <button class="control-btn" onclick="logout()" id="logoutBtn" style="display: none; color: #ff6b6b; border-color: rgba(255, 107, 107, 0.3);">⏻</button>
+    </div>
+
+    <div class="header-wrapper">
+        <div class="header-container">
+            <h1 id="header-title">SWT PORTAL</h1>
+            <h2 id="header-subtitle">created by mano</h2>
+            <div id="glowing-welcome" style="display: none;"></div> 
+        </div>
+    </div>
+    
+    <div id="message-box" class="message-box" style="display: none;"></div>
+
+    <div class="main-content">
+        
+        <div id="login-screen">
+            <h3 style="margin: 0 0 25px 0; font-size: 1.4em; font-weight: 700; opacity: 0.9;">Identity Verification</h3>
+            
+            <input type="text" id="username-input" placeholder="USER ID" autocomplete="off">
+            
+            <div class="input-container">
+                <input type="password" id="password-input" placeholder="PASSWORD">
+                <span class="eye-icon" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <button id="login-button">ACCESS SYSTEM</button>
+            <p id="error-message">⚠️ ACCESS DENIED</p>
+        </div>
+
+        <div id="dashboard-container">
+            
+            <div class="action-bar">
+                <div class="sort-island-container">
+                    <div id="dynamic-sort" class="dynamic-island" onclick="toggleDynamicIsland()">
+                        <span class="sort-icon">⇅</span>
+                        <div class="sort-options">
+                            <button class="sort-opt-btn" onclick="sortCards('AZ', event)">A-Z</button>
+                            <button class="sort-opt-btn" onclick="sortCards('PROFS', event)">Profs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="new-updates-btn" onclick="scrollToNew()" title="See what's new">
+                    ✨ New
+                </button>
+                
+                <div class="search-wrapper">
+                    <span class="search-icon-visual">🔍</span>
+                    <input type="text" id="search-input" placeholder="Search..." onkeyup="filterCards()">
+                </div>
+            </div>
+            
+            <div class="folder-tabs">
+                <button class="tab-btn active" onclick="switchFolder('NIST', this)">NIST</button>
+                <button class="tab-btn" onclick="switchFolder('SUNRISE', this)">SUNRISE</button>
+            </div>
+
+            <div id="NIST" class="folder-view active-folder">
+                <ul class="card-grid" id="nist-grid">
+                    <li data-name="physiology" data-cat="Preclinical"><div onclick="navigateAndMarkViewed(this, 'physiology.html')" class="subject-card"><strong>🫀 Physiology</strong><span>Test your knowledge in Physiology.</span></div></li>
+                    <li data-name="radio" data-cat="Preclinical"><div onclick="navigateAndMarkViewed(this, 'micro radio.html')" class="subject-card"><strong>☢️ Radiology</strong><span>“A picture is worth a thousand differential diagnoses.”</span></div></li>                    
+                    <li data-name="fmt" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'fmt.html')" class="subject-card"><strong>⚖️ FMT</strong><span>Forensic Medicine and Toxicology.</span></div></li>
+                    <li data-name="anasthesia" data-cat="Small"><div onclick="navigateAndMarkViewed(this, 'anasthesia.html')" class="subject-card"><strong>💉 Anesthesia</strong><span>Test your Anesthesia skills.</span></div></li>
+                    <li data-name="paediatrics" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'paediatrics.html')" class="subject-card"><strong>👶 Paediatrics</strong><span>Quizzes dedicated to Paediatrics.</span></div></li>
+                    <li data-name="derma" data-cat="Small"><div onclick="navigateAndMarkViewed(this, 'derma and psych.html')" class="subject-card"><strong>🩹 Dermatology</strong><span>“Healthy skin is a reflection of overall wellness.”</span></div></li>                    <li data-name="mock 2" data-cat="Mock"><div onclick="navigateAndMarkViewed(this, 'mock2.html')" class="subject-card"><strong>📝 Mock 2</strong><span>12 November Mock2 q. 137.</span></div></li>
+                    <li data-name="derma" data-cat="small"><div onclick="navigateAndMarkViewed(this, 'orthopedics.html')" class="subject-card"><strong>🦴 Orthopedics</strong><span>“Movement is life.”</span></div></li>
+                    <li data-name="micro" data-cat="preclinical"><div onclick="navigateAndMarkViewed(this, 'microbiology.html')" class="subject-card"><strong>🦠 Microbiology</strong><span>“The little things are infinitely the most important.”</span></div></li>
+                    <li data-name="mock 3" data-cat="Mock"data-is-new="true">
+                        <div class="subject-card" style="cursor: default; display: flex; flex-direction: column;">
+                            <strong>📝 Mock Test 3</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 5px; width: 100%; flex-grow: 1;">
+                                <div onclick="navigateAndMarkViewed(this, 'mock3_part1.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 1</strong>
+                                </div>
+                                <div onclick="navigateAndMarkViewed(this, 'mock3_part2.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 2</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li data-name="med" data-cat="clinical">
+                        <div class="subject-card" style="cursor: default; display: flex; flex-direction: column;">
+                            <strong>🩺 Medicine</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 5px; width: 100%; flex-grow: 1;">
+                                <div onclick="navigateAndMarkViewed(this, 'medicine.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">SINGARAM sir</strong>
+                                </div>
+                                <div onclick="navigateAndMarkViewed(this, 'medicine1.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">KUNAl sir</strong>
+                                </div>
+                                 <div onclick="navigateAndMarkViewed(this, 'medicine2.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">S.patil sir</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li data-name="biochem" data-cat="Preclinical"><div onclick="navigateAndMarkViewed(this, 'biochem final.html')" class="subject-card"><strong>🧬 Biochemistry</strong><span>Path for a million possibilities.</span></div></li>
+                    <li data-name="anatomy" data-cat="Preclinical" ><div onclick="navigateAndMarkViewed(this, 'Anatomy.html')" class="subject-card"><strong>🦴 Anatomy</strong><span>"Anatomy is destiny."</span></div></li>
+                    <li data-name="pathology" data-cat="Preclinical" ><div onclick="navigateAndMarkViewed(this, 'pathology.html')" class="subject-card"><strong>🦠 Pathology</strong><span>"Small cells. Big stories."</span></div></li>
+                    <li data-name="oph" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'opthalmology.html')" class="subject-card"><strong>👁️ Ophthalmology</strong><span>"हँसी थमी है इन आँखों में यूँ नमी की तरह, चमक उठे हैं अंधेरे भी रौशनी की तरह"</span></div></li>
+                    <li data-name="pha" data-cat="Preclinical" ><div onclick="navigateAndMarkViewed(this, 'pharmacology.html')" class="subject-card"><strong>💊 Pharmacology</strong><span>“All things are poison, and nothing is without poison; only the dose makes a thing not a poison.”</span></div></li>
+                    <li data-name="psy" data-cat="small"><div onclick="navigateAndMarkViewed(this, 'psychiatry.html')" class="subject-card"><strong>🧠 Psychiatry</strong><span>“A failure to diagnose is an invitation to treat the symptom rather than the disease.”</span></div></li>
+                    <li data-name="surg" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'surgery.html')" class="subject-card"><strong>😷 Surgery</strong><span>"see image for quistion 42"</span></div></li>
+                    
+                    <li data-name="ent" data-cat="Clinical"data-is-new="true"><div onclick="navigateAndMarkViewed(this, 'ent.html')" class="subject-card"><strong>👂 ENT</strong><span>Ear, Nose, and Throat.</span></div></li>
+                    <li data-name="psm" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'psm.html')" class="subject-card"><strong>🌍 PSM</strong><span>Community Medicine.</span></div></li>
+                    <li data-name="obgy" data-cat="Clinical"><div onclick="navigateAndMarkViewed(this, 'obgy.html')" class="subject-card"><strong>🤰 OBGY</strong><span>Obstetrics and Gynecology.</span></div></li>
+
+                     <li data-name="mock 4" data-cat="Mock" data-is-new="true">
+                        <div class="subject-card" style="cursor: default; display: flex; flex-direction: column;">
+                            <strong>📝 Mock Test 4</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 5px; width: 100%; flex-grow: 1;">
+                                <div onclick="navigateAndMarkViewed(this, 'mock41.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 1</strong>
+                                </div>
+                                <div onclick="navigateAndMarkViewed(this, 'mock42.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 2</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                     <li data-name="mock 5" data-cat="Mock" data-is-new="true">
+                        <div class="subject-card" style="cursor: default; display: flex; flex-direction: column;">
+                            <strong>📝 Mock Test 5</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 5px; width: 100%; flex-grow: 1;">
+                                <div onclick="navigateAndMarkViewed(this, 'mock51.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 1</strong>
+                                </div>
+                                <div onclick="navigateAndMarkViewed(this, 'mock52.html')" style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <strong style="font-size: 1em; margin: 0;">Part 2</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                   
+                </ul>
+            </div>
+
+            <div id="SUNRISE" class="folder-view">
+                 <ul class="card-grid" id="sunrise-grid">
+                    <li data-cat="Preclinical">
+                        <div onclick="navigateAndMarkViewed(this, 'parise.html')" class="subject-card">
+                            <strong>🫀 1. Physiology</strong>
+                            <span>"The physiology of today is the medicine of tomorrow."</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <p class="footer-text">
+                All The Best • Enjoy The Process
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.birds.min.js"></script>
+    
+    <script>
+        // --- PWA INSTALLATION & CACHE UPDATER ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Check if the protocol is supported (http or https)
+                // This prevents errors in preview environments or when opening file:// or blob: URLs
+                if (!['http:', 'https:'].includes(window.location.protocol)) {
+                   console.warn('Service Workers are not supported in this protocol (' + window.location.protocol + '). Skipping registration.');
+                   return;
+                }
+
+                navigator.serviceWorker.register('./service-worker.js').then(registration => {
+                    registration.onupdatefound = () => {
+                        const installingWorker = registration.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                window.location.reload(); 
+                            }
+                        };
+                    };
+                }).catch(err => {
+                    // Suppress errors during preview if service worker file is missing or blocked
+                    console.log('Service Worker registration failed (likely due to preview environment): ', err);
+                });
+                
+                let refreshing;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    window.location.reload();
+                    refreshing = true;
+                });
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'flex';
+        });
+
+        installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((res) => { deferredPrompt = null; });
+        });
+
+        // --- THEME & VANTA ---
+        let vantaEffect = null;
+        const themeBtn = document.getElementById('themeBtn');
+        // NEW: Animation State
+        let animationEnabled = localStorage.getItem('animation-enabled') !== 'false'; // Default to true if not set
+
+        function initVanta(theme) {
+            // Only init if enabled
+            if (!animationEnabled) {
+                if(vantaEffect) vantaEffect.destroy();
+                return;
+            }
+
+            if (vantaEffect) vantaEffect.destroy(); 
+            const config = {
+                el: "#vanta-bg",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                scale: 1.00,
+                scaleMobile: 1.00,
+                birdSize: 1.30, 
+                speedLimit: 3.00,
+                quantity: theme === 'dark' ? 4 : 3,
+                backgroundColor: theme === 'dark' ? 0x0e1225 : 0xeef2f5,
+                color1: 0x007BFF,
+                color2: theme === 'dark' ? 0xbd34fe : 0xff0055,
+                backgroundAlpha: 1.0
+            };
+            try { vantaEffect = VANTA.BIRDS(config); } catch (e) {}
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            themeBtn.innerText = next === 'light' ? '☀️' : '🌙';
+            localStorage.setItem('site-theme', next);
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', next === 'light' ? '#e8ecf1' : '#050510');
+            initVanta(next);
+        }
+
+        // --- NEW: ANIMATION TOGGLE LOGIC ---
+        function toggleAnimationControl() {
+            const btn = document.getElementById('animBtn');
+            const txt = document.getElementById('animText');
+            
+            // Expand UI
+            btn.classList.add('expanded');
+            
+            // Toggle State
+            animationEnabled = !animationEnabled;
+            localStorage.setItem('animation-enabled', animationEnabled);
+            
+            // Apply Effect
+            if(animationEnabled) {
+                txt.innerText = "Animation ON";
+                // Get current theme to start correct vanta
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                initVanta(currentTheme);
+            } else {
+                txt.innerText = "Animation OFF";
+                if (vantaEffect) vantaEffect.destroy();
+                vantaEffect = null;
+            }
+
+            // Collapse UI after delay
+            setTimeout(() => {
+                btn.classList.remove('expanded');
+            }, 2000);
+        }
+
+        const savedTheme = localStorage.getItem('site-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeBtn.innerText = savedTheme === 'light' ? '☀️' : '🌙';
+        
+        // --- NEW: GLOBAL SORT STATE ---
+        let activeSortMode = 'PROFS'; // Default sort mode
+
+        window.onload = () => {
+            initVanta(savedTheme);
+            setDynamicCardColors(); // Set colors on load
+            initTaskMarkers(); // NEW: Initialize markers
+            
+            // DEFAULT VIEW: Trigger Profs Sort
+            sortCards('PROFS', null); 
+            // NEW: Start Countdown
+            updateCountdown();
+            setInterval(updateCountdown, 60000); // Update every minute
+        };
+        
+        // --- NEW: TASK COMPLETION LOGIC ---
+        
+        function initTaskMarkers() {
+            // Add dots to all cards
+            document.querySelectorAll('.subject-card').forEach(card => {
+                // Check if already added to avoid duplicates if re-run
+                if(card.querySelector('.task-mark')) return;
+
+                const parentLi = card.closest('li');
+                if(!parentLi) return;
+                
+                const taskName = parentLi.getAttribute('data-name') || parentLi.innerText.split('\n')[0].trim();
+                
+                const dot = document.createElement('div');
+                dot.className = 'task-mark';
+                dot.onclick = (e) => toggleTaskStatus(e, taskName, dot);
+                
+                // Load state from storage
+                const savedTasks = JSON.parse(localStorage.getItem('swt_portal_tasks') || '{}');
+                if(savedTasks[taskName]) {
+                    dot.classList.add('completed');
+                }
+                
+                card.appendChild(dot);
+                card.style.position = 'relative'; // Ensure absolute positioning works
+            });
+        }
+
+        function toggleTaskStatus(event, taskName, dotElement) {
+            event.stopPropagation(); // Prevent card click navigation
+            
+            const savedTasks = JSON.parse(localStorage.getItem('swt_portal_tasks') || '{}');
+            const isComplete = !savedTasks[taskName]; // Toggle
+            
+            savedTasks[taskName] = isComplete;
+            localStorage.setItem('swt_portal_tasks', JSON.stringify(savedTasks));
+            
+            // Update Visuals
+            if(isComplete) {
+                dotElement.classList.add('completed');
+                showMessage(`Task "${taskName}" marked as completed!`, "success", 2000);
+            } else {
+                dotElement.classList.remove('completed');
+            }
+            
+            updateProgressModalData(); // Refresh modal data if open
+        }
+
+        // --- NEW: PROGRESS MODAL LOGIC ---
+        
+        function toggleProgressModal() {
+            const modal = document.getElementById('progress-modal');
+            const isShowing = modal.classList.contains('show');
+            
+            if(!isShowing) {
+                updateProgressModalData(); // Refresh data before showing
+                modal.classList.add('show');
+            } else {
+                modal.classList.remove('show');
+            }
+        }
+        
+        function updateProgressModalData() {
+            // Count total items
+            const allItems = document.querySelectorAll('li[data-name], li[data-cat] .subject-card'); // Trying to catch all cards
+            // Since we added dots to .subject-card, let's count dots
+            const totalDots = document.querySelectorAll('.task-mark').length;
+            
+            // Count completed
+            const savedTasks = JSON.parse(localStorage.getItem('swt_portal_tasks') || '{}');
+            let completedCount = 0;
+            const completedNames = [];
+            
+            // Iterate over storage keys, but verify they exist in DOM (in case of stale data)
+            // Or just trust storage for now, but better to match current cards
+            document.querySelectorAll('.task-mark').forEach(dot => {
+                if(dot.classList.contains('completed')) {
+                    completedCount++;
+                    // Find name
+                    const card = dot.closest('.subject-card');
+                    const li = card.closest('li');
+                    const name = li.getAttribute('data-name') || card.querySelector('strong').innerText;
+                    completedNames.push(name);
+                }
+            });
+
+            // Update DOM
+            document.getElementById('progress-big-num').innerText = completedCount;
+            document.getElementById('progress-total-text').innerText = `/ ${totalDots} Tasks Completed`;
+            
+            // Update Bar
+            const percent = totalDots > 0 ? (completedCount / totalDots) * 100 : 0;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+            
+            // Update List
+            const listContainer = document.getElementById('completed-list');
+            listContainer.innerHTML = ''; // Clear
+            
+            if(completedNames.length === 0) {
+                listContainer.innerHTML = '<div class="completed-item" style="justify-content:center; opacity:0.5;">No tasks finished yet...</div>';
+            } else {
+                completedNames.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = 'completed-item';
+                    div.innerText = name;
+                    listContainer.appendChild(div);
+                });
+            }
+        }
+        
+        // --- NEW: COUNTDOWN LOGIC ---
+        function updateCountdown() {
+            const examDate = new Date('2026-01-16T00:00:00');
+            const now = new Date();
+            const diff = examDate - now;
+            
+            // Calculate days
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            
+            const textElement = document.getElementById('days-text');
+            if (days > 0) {
+                textElement.innerText = `${days} Days`;
+            } else if (days === 0) {
+                textElement.innerText = "Today is the Day!";
+            } else {
+                textElement.innerText = "Exam Completed";
+            }
+        }
+        
+        // --- UTILITY MESSAGE HANDLER (Replaces alert()) ---
+        function showMessage(msg, type = 'info', duration = 3000) {
+            const box = document.getElementById('message-box');
+            box.innerText = msg;
+            box.className = `message-box ${type}`;
+            box.style.display = 'block';
+
+            if (duration > 0) {
+                setTimeout(() => {
+                    box.style.display = 'none';
+                }, duration);
+            }
+        }
+
+        // --- LOGIC ---
+
+        const NEON_COLORS = [
+            '#00c6ff', // Neon Blue
+            '#bd34fe', // Neon Purple
+            '#ff4b4b', // Neon Red
+            '#ffc107', // Neon Yellow
+            '#20c997', // Neon Green
+            '#ff00ff', // Neon Pink
+            '#27F2F5', // Cyan
+            '#ffa500', // Orange
+            '#7fff00', // Chartreuse
+            '#f0e68c'  // Khaki/Pale Yellow
+        ];
+
+        function setDynamicCardColors() {
+            const cards = document.querySelectorAll('.subject-card');
+            cards.forEach((card, index) => {
+                const color = NEON_COLORS[index % NEON_COLORS.length];
+                
+                // 1. Set the left border color
+                card.style.borderLeftColor = color;
+                
+                // Helper functions to handle the glow & elevation (Transform)
+                // This ensures consistency across mouse and touch events
+                const setReflectedState = () => {
+                    card.style.boxShadow = `0 10px 40px ${color}40`; // The Glow
+                    card.style.transform = 'translateY(-5px)';       // The Elevation
+                    card.style.transition = 'all 0.3s ease';         // Smooth transition
+                };
+                
+                const setNormalState = () => {
+                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.3)`;
+                    card.style.transform = 'translateY(0)';
+                };
+
+                // 2. Mouse Events (Desktop)
+                // Replaces previous onmouseover/out for better performance and consistency
+                card.onmouseenter = setReflectedState;
+                card.onmouseleave = setNormalState;
+                
+                // 3. Touch Events (Mobile/Tablet)
+                // Triggers the exact same glow and elevation on touch
+                card.ontouchstart = function() {
+                    setReflectedState();
+                };
+                
+                card.ontouchend = function() {
+                    // Small delay so the user actually sees the glow before it vanishes
+                    setTimeout(setNormalState, 300);
+                };
+                
+                card.ontouchcancel = setNormalState;
+            });
+        }
+        
+        const USER_CREDENTIALS = { "zaid": "Z1234", "thokya": "1234", "mn": "21", "vana": "1234", "vinayak": "V@123", "darshan": "D123", "sahil": "Ss123" };
+
+        const loginScreen = document.getElementById('login-screen');
+        const dashboard = document.getElementById('dashboard-container');
+        const usernameInput = document.getElementById('username-input');
+        const passwordInput = document.getElementById('password-input');
+        const errorMsg = document.getElementById('error-message');
+        const headerTitle = document.getElementById('header-title');
+        const headerSub = document.getElementById('header-subtitle');
+        // Get the new glowing welcome element
+        const glowingWelcome = document.getElementById('glowing-welcome'); 
+
+        function updateUIForLogin(username) {
+            dashboard.style.display = 'block';
+            loginScreen.style.display = 'none';
+            logoutBtn.style.display = 'flex';
+            
+            // NEW: Keep original titles and add glowing welcome message
+            // headerTitle.innerText = `SWT PORTAL`; (Kept constant)
+            // headerSub.innerText = "created by mano"; (Kept constant)
+            glowingWelcome.innerText = `WELCOME, ${username.toUpperCase()}`;
+            glowingWelcome.style.display = 'block';
+            
+            // Ensure sorting is applied after display block
+            setTimeout(() => sortCards('PROFS', null), 100);
+        }
+
+        document.getElementById("login-button").addEventListener("click", function () {
+            const user = usernameInput.value.trim();
+            const pass = passwordInput.value.trim();
+            if (USER_CREDENTIALS[user] && USER_CREDENTIALS[user] === pass) {
+                errorMsg.style.display = "none";
+                updateUIForLogin(user);
+                sessionStorage.setItem('portalToken', 'valid-user-' + user); 
+            } else {
+                errorMsg.style.display = "block";
+                showMessage("Access Denied. Check your credentials.", "error", 4000);
+            }
+        });
+
+        function logout() {
+            dashboard.style.display = "none";
+            loginScreen.style.display = "block";
+            logoutBtn.style.display = "none";
+            usernameInput.value = "";
+            passwordInput.value = "";
+            
+            // HIDE the glowing welcome message
+            glowingWelcome.style.display = 'none';
+            
+            // Reset main titles (optional, as they are now static, but good practice)
+            headerTitle.innerText = "SWT PORTAL";
+            headerSub.innerText = "created by mano";
+
+            sessionStorage.removeItem('portalToken');
+            showMessage("Logged out successfully.", "info", 3000);
+        }
+
+        function togglePassword() {
+            passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+        }
+
+        function switchFolder(folder, btn) {
+            document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            else {
+                // Find button for folder
+                const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText === folder);
+                if(targetBtn) targetBtn.classList.add('active');
+            }
+            
+            document.querySelectorAll(".folder-view").forEach(f => f.classList.remove("active-folder"));
+            document.getElementById(folder).classList.add("active-folder");
+            
+            // NEW: Trigger sort logic using the ACTIVE MODE (preserves A-Z if active)
+            sortCards(activeSortMode, null); 
+        }
+
+        function filterCards() {
+            const searchText = document.getElementById("search-input").value.toLowerCase();
+            document.querySelectorAll(".subject-card").forEach(card => {
+                const parentLi = card.closest('li');
+                if (card.innerText.toLowerCase().includes(searchText)) {
+                    card.classList.remove("hidden-card");
+                    if (parentLi) parentLi.style.display = '';
+                } else {
+                    card.classList.add("hidden-card");
+                    if (parentLi) parentLi.style.display = 'none';
+                }
+            });
+        }
+
+        // --- SORTING LOGIC ---
+        
+        let cachedLists = {
+            'nist-grid': [],
+            'sunrise-grid': []
+        };
+        
+        function cacheList(gridId) {
+            if (cachedLists[gridId].length === 0) {
+                const listItems = document.querySelectorAll(`#${gridId} > li`);
+                listItems.forEach(li => cachedLists[gridId].push(li));
+            }
+        }
+
+        function toggleDynamicIsland() {
+            document.getElementById('dynamic-sort').classList.toggle('expanded');
+        }
+
+        function sortCards(type, event) {
+            if(event) event.stopPropagation();
+            
+            activeSortMode = type; // NEW: Update global sort mode
+            
+            // 1. Identify active folder
+            const activeFolderDiv = document.querySelector('.folder-view.active-folder');
+            if(!activeFolderDiv) return;
+            const gridUl = activeFolderDiv.querySelector('ul'); // Get the UL inside
+            if(!gridUl) return; 
+            const gridId = gridUl.id;
+
+            // 2. Cache if needed
+            cacheList(gridId);
+            
+            // 3. Clear current view
+            gridUl.innerHTML = '';
+            
+            // 4. Logic
+            if (type === 'AZ') {
+                gridUl.className = 'card-grid'; // Reset class
+                gridUl.style.display = 'grid'; // Restore grid display
+
+                let sortedList = [...cachedLists[gridId]].sort((a, b) => {
+                    const textA = a.innerText.toLowerCase();
+                    const textB = b.innerText.toLowerCase();
+                    return textA.localeCompare(textB);
+                });
+                
+                sortedList.forEach(li => {
+                    li.style.display = ''; 
+                    gridUl.appendChild(li);
+                });
+            
+            } else if (type === 'PROFS') {
+                gridUl.className = 'card-grid profs-container';
+                gridUl.style.display = 'block';
+
+                const preclinical = [];
+                const clinical = [];
+                const small = [];
+                const mocks = [];
+
+                cachedLists[gridId].forEach(li => {
+                    li.style.display = ''; 
+                    const text = li.innerText.toLowerCase();
+                    const cat = li.getAttribute('data-cat') || "";
+                    
+                    if (text.includes("mock")) {
+                        mocks.push(li);
+                    } else if (cat === "Preclinical") {
+                        preclinical.push(li);
+                    } else if (cat === "Clinical") {
+                        clinical.push(li);
+                    } else if (cat === "Small") {
+                        small.push(li);
+                    } else {
+                        // Fallback logic
+                        if (text.includes("anatomy") || text.includes("physio") || text.includes("biochem") || text.includes("micro") || text.includes("patho") || text.includes("pharm")) {
+                            preclinical.push(li);
+                        } else if (text.includes("ent") || text.includes("opthal") || text.includes("paed") || text.includes("fmt") || text.includes("med") || text.includes("surg") || text.includes("obs") || text.includes("psm") || text.includes("obgy")) {
+                            clinical.push(li);
+                        } else {
+                            small.push(li);
+                        }
+                    }
+                });
+
+                // Create 3 Column Layout Container
+                const columnsWrapper = document.createElement('div');
+                columnsWrapper.className = 'profs-column-container';
+
+                // Helper to build column
+                function buildColumn(title, items) {
+                    const col = document.createElement('div');
+                    col.className = 'prof-column';
+                    const h3 = document.createElement('h3');
+                    h3.innerText = title;
+                    col.appendChild(h3);
+                    if (items.length > 0) {
+                        items.forEach(item => col.appendChild(item));
+                    } else {
+                        const empty = document.createElement('span');
+                        empty.innerText = "No subjects";
+                        empty.style.color = "rgba(255,255,255,0.3)";
+                        empty.style.textAlign = "center";
+                        col.appendChild(empty);
+                    }
+                    return col;
+                }
+
+                columnsWrapper.appendChild(buildColumn('Preclinical', preclinical));
+                columnsWrapper.appendChild(buildColumn('Clinical', clinical));
+                columnsWrapper.appendChild(buildColumn('Small', small));
+                
+                gridUl.appendChild(columnsWrapper);
+
+                // Add Separator and Mocks
+                if(mocks.length > 0) {
+                    const hr = document.createElement('div');
+                    hr.className = 'horizontal-line-separator';
+                    gridUl.appendChild(hr);
+                    
+                    const mockContainer = document.createElement('div');
+                    mockContainer.style.display = 'flex';
+                    mockContainer.style.justifyContent = 'center';
+                    mockContainer.style.flexWrap = 'wrap';
+                    mockContainer.style.gap = '20px';
+                    mockContainer.style.width = '100%';
+                    
+                    mocks.forEach(li => mockContainer.appendChild(li));
+                    gridUl.appendChild(mockContainer);
+                }
+            }
+            
+            // RE-INIT MARKERS AFTER SORT
+            // Because we cleared innerHTML and rebuilt it from cached LIs, 
+            // the LIs still have the dots (since we appended to cached LI).
+            // But just in case, we can check. (Actually, cached elements retain their DOM changes).
+            
+            const island = document.getElementById('dynamic-sort');
+            if(island) setTimeout(() => island.classList.remove('expanded'), 300);
+        }
+
+        // --- NEW: BACK BUTTON LOGIC ---
+
+        function showBackText() {
+            const btn = document.getElementById('exam-back-text');
+            if (btn) {
+                btn.style.display = 'block';
+            }
+        }
+
+        function closeExamAndReturn() {
+            // 1. Hide the Exam Container & Back Controls
+            document.getElementById('exam-container').style.display = 'none';
+            document.getElementById('exam-back-controls').style.display = 'none';
+            document.getElementById('exam-back-text').style.display = 'none'; // Reset text
+            
+            // 2. Clear Iframe source (stops audio/video)
+            document.getElementById('exam-iframe').src = '';
+
+            // 3. Show Dashboard & Header
+            document.getElementById('dashboard-container').style.display = 'block';
+            document.querySelector('.header-wrapper').style.display = 'block';
+            document.querySelector('.controls-area').style.display = 'flex';
+            // NEW: Show Countdown again
+            document.querySelector('.countdown-area').style.display = 'flex';
+
+            // 4. BATTERY SAVER: RESUME ANIMATION (If enabled)
+            if (animationEnabled) {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                initVanta(currentTheme);
+            }
+        }
+
+        // --- NEW CARD NAVIGATION LOGIC (Modified) ---
+        
+        function navigateAndMarkViewed(clickedDiv, url) {
+            if(sessionStorage.getItem('portalToken')) {
+                
+                // Find the parent <li> element
+                const cardLi = clickedDiv.closest('li');
+
+                // If the card is marked as new, remove the glow attribute
+                if (cardLi && cardLi.hasAttribute('data-is-new')) {
+                    cardLi.removeAttribute('data-is-new');
+                }
+
+                // --- NEW BEHAVIOR: OPEN EXAM VIEW ---
+                
+                // 1. Hide Dashboard & Header
+                document.getElementById('dashboard-container').style.display = 'none';
+                document.querySelector('.header-wrapper').style.display = 'none';
+                document.querySelector('.controls-area').style.display = 'none';
+                // NEW: Hide Countdown during exam to prevent distraction/overlap
+                document.querySelector('.countdown-area').style.display = 'none';
+
+                // 2. Show Exam Container
+                const examContainer = document.getElementById('exam-container');
+                const iframe = document.getElementById('exam-iframe');
+                examContainer.style.display = 'flex';
+
+                // 3. Load URL into Iframe (Simulating external exam page)
+                iframe.src = url; 
+
+                // 4. Show Back Controls (Only the Cross initially)
+                const controls = document.getElementById('exam-back-controls');
+                controls.style.display = 'flex';
+                document.getElementById('exam-back-text').style.display = 'none';
+                
+                // 5. BATTERY SAVER: STOP ANIMATION
+                if (vantaEffect) vantaEffect.destroy();
+
+                console.log(`Navigating to Exam: ${url}`);
+
+            } else {
+                showMessage("Please log in first.", "error", 4000);
+                logout();
+            }
+        }
+
+        // This function handles the click on the "✨ New" BUTTON.
+        function scrollToNew() {
+            const targetLi = document.querySelector('li[data-is-new="true"]');
+
+            if (targetLi) {
+                // Determine which folder the new card belongs to
+                const parentFolderId = targetLi.closest('.folder-view.active-folder') ? 
+                    targetLi.closest('.folder-view').id : 'NIST'; // Default to NIST if not clearly found
+                
+                // 1. Switch to the correct Folder (NOW RESPECTS SORT MODE)
+                switchFolder(parentFolderId, null);
+
+                // 2. Wait for DOM update, then find card
+                setTimeout(() => {
+                    const target = document.querySelector('li[data-is-new="true"]');
+                    if (target) {
+                        // Scroll to the card
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        if(sessionStorage.getItem('portalToken')) {
+                            // If logged in, do nothing (no message shown)
+                            
+                        } else {
+                            showMessage("Please log in first.", "error", 4000);
+                            logout();
+                        }
+                    }
+                }, 300); 
+            } else {
+                showMessage("No new updates found.", "info", 3000);
+            }
+        }
+        
+        // --- INITIAL AUTH CHECK ---
+        const portalToken = sessionStorage.getItem('portalToken');
+        if (portalToken && portalToken.startsWith('valid-user-')) {
+            const username = portalToken.split('-')[2];
+            updateUIForLogin(username);
+        } else if (portalToken) {
+            // Invalid token found, log out
+             logout();
+        }
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if(event.keyCode == 123) { return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; } 
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; } 
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; } 
+        }
+
+    </script>
+</body>
+</html>
